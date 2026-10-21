@@ -6,9 +6,9 @@ This repo is the description and index of the project. The code and the QA work 
 
 | Branch | What is on it |
 | --- | --- |
-| [`frontend`](../../tree/frontend) | The web app (React 19, Redux Toolkit, Vite 7, Tailwind 4, DaisyUI), with 15 bug fixes |
-| [`backend`](../../tree/backend) | The REST API (Node, Express 5, MongoDB/Mongoose 9, JWT), with 16 bug fixes |
-| [`problem-solving`](../../tree/problem-solving) | The QA bug report: 31 bugs with steps, expected vs actual, fixes and verification |
+| [`frontend`](../../tree/frontend) | The web app (React 19, Redux Toolkit, Vite 7, Tailwind 4, DaisyUI), with 16 bug fixes |
+| [`backend`](../../tree/backend) | The REST API (Node, Express 5, MongoDB/Mongoose 9, JWT), with 17 bug fixes |
+| [`problem-solving`](../../tree/problem-solving) | The QA bug report: 33 bugs with steps, expected vs actual, fixes and verification |
 | `main` (this branch) | The project description |
 
 ## Features
@@ -94,7 +94,7 @@ The starting code contained deliberate and accidental bugs. They were found by r
 | --- | --- | --- |
 | Critical | 6 | login always failed (plaintext password compare); invalid JWTs accepted; first enrollment always failed; login not persisted (token key mismatch); My Courses crashed; hardcoded admin token and bypass backdoor |
 | High | 5 | banned users kept access; lessons completable on others' enrollments; quiz percent off by 10x; price shown 100x; enrolling with a batch failed |
-| Medium | 11 | admin filter ignored; search crashed on `(`; missing validation; analytics timezone; orphaned records; video size; and others |
+| Medium | 13 | admin filter ignored; search crashed on `(`; missing validation; analytics timezone; orphaned records; video size; and others |
 | Low | 9 | dead links, markup warnings, config template, latent code issues |
 
 ## Where the code comes from
