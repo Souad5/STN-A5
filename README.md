@@ -1,6 +1,9 @@
 # STN-A5 / problem-solving
 
-QA bug report for the CourseMaster backend and frontend: 31 bugs found, fixed and verified locally (6 Critical, 5 High, 11 Medium, 9 Low).
+| Path | What it is |
+| --- | --- |
+| [`problem-solving/solution.js`](problem-solving/solution.js) | Solutions to the 20 assigned problems in one JavaScript file ([README](problem-solving/README.md)) |
+| [`BUG-REPORT.md`](BUG-REPORT.md) | QA bug report for the CourseMaster backend and frontend: 31 bugs found, fixed and verified |
 
-- [`BUG-REPORT.md`](BUG-REPORT.md): every bug with steps, expected vs actual, fix and verification.
-- The fixed code is on the `backend` and `frontend` branches, and both together on `main`.
+Run the problem-solving tests with `node problem-solving/solution.js`.
+The fixed application code is on the `backend` and `frontend` branches.
