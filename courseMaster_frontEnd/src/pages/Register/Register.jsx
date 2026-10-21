@@ -9,20 +9,36 @@ export default function Register() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [showAdminKey, setShowAdminKey] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState({});
 
-    const handleChange = (e) =>
+    const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
+        if (fieldErrors[e.target.name]) setFieldErrors({ ...fieldErrors, [e.target.name]: undefined });
+    };
+
+    // mirrors the backend rules so the user gets feedback before a request is sent
+    const validate = () => {
+        const errors = {};
+        if (form.name.trim().length < 2) errors.name = "Name must be at least 2 characters";
+        if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) errors.email = "Enter a valid email address";
+        if (form.password.length < 6) errors.password = "Password must be at least 6 characters";
+        return errors;
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const errors = validate();
+        setFieldErrors(errors);
+        if (Object.keys(errors).length > 0) return;
+
         try {
             setLoading(true);
             setError(null);
 
             // Only send adminKey if it's provided
             const payload = {
-                name: form.name,
-                email: form.email,
+                name: form.name.trim(),
+                email: form.email.trim(),
                 password: form.password,
             };
             if (form.adminKey.trim()) {
@@ -33,7 +49,16 @@ export default function Register() {
 
             navigate("/login");
         } catch (err) {
-            setError(err.response?.data?.message || "Register failed");
+            const data = err.response?.data;
+            // map backend validation errors onto the fields they belong to
+            if (Array.isArray(data?.errors) && data.errors.length > 0) {
+                const mapped = {};
+                data.errors.forEach((item) => {
+                    if (item.field && !mapped[item.field]) mapped[item.field] = `${item.field} ${item.message}`;
+                });
+                setFieldErrors(mapped);
+            }
+            setError(data?.message || (err.request ? "Cannot reach the server. Please try again." : "Register failed"));
         } finally {
             setLoading(false);
         }
@@ -56,7 +81,7 @@ export default function Register() {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                    <form onSubmit={handleSubmit} className="space-y-4 mt-4" noValidate>
                         <div className="form-control">
                             <label className="label">
                                 <span className="label-text font-semibold">Full Name</span>
@@ -66,9 +91,10 @@ export default function Register() {
                                 value={form.name}
                                 onChange={handleChange}
                                 placeholder="Enter your full name"
-                                className="input input-bordered w-full focus:input-primary"
+                                className={`input input-bordered w-full focus:input-primary ${fieldErrors.name ? "input-error" : ""}`}
                                 required
                             />
+                            {fieldErrors.name && <p className="text-error text-sm mt-1">{fieldErrors.name}</p>}
                         </div>
                         <div className="form-control">
                             <label className="label">
@@ -80,9 +106,10 @@ export default function Register() {
                                 value={form.email}
                                 onChange={handleChange}
                                 placeholder="Enter your email"
-                                className="input input-bordered w-full focus:input-primary"
+                                className={`input input-bordered w-full focus:input-primary ${fieldErrors.email ? "input-error" : ""}`}
                                 required
                             />
+                            {fieldErrors.email && <p className="text-error text-sm mt-1">{fieldErrors.email}</p>}
                         </div>
                         <div className="form-control">
                             <label className="label">
@@ -94,9 +121,10 @@ export default function Register() {
                                 value={form.password}
                                 onChange={handleChange}
                                 placeholder="Create a password"
-                                className="input input-bordered w-full focus:input-primary"
+                                className={`input input-bordered w-full focus:input-primary ${fieldErrors.password ? "input-error" : ""}`}
                                 required
                             />
+                            {fieldErrors.password && <p className="text-error text-sm mt-1">{fieldErrors.password}</p>}
                         </div>
 
                         {/* Admin Registration Key (Optional) */}

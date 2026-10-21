@@ -5,7 +5,7 @@ import { reviewAssignment } from "../../../services/admin.api";
 
 export default function Assignments() {
     const dispatch = useDispatch();
-    const { assignments, loading } = useSelector((state) => state.admin);
+    const { assignments, loading, error } = useSelector((state) => state.admin);
 
     const [filterStatus, setFilterStatus] = useState("all"); // all, submitted, reviewed
     const [searchStudent, setSearchStudent] = useState("");
@@ -301,6 +301,11 @@ export default function Assignments() {
             {loading ? (
                 <div className="flex justify-center">
                     <span className="loading loading-spinner loading-lg"></span>
+                </div>
+            ) : error ? (
+                <div className="alert alert-error">
+                    <span>{error}</span>
+                    <button className="btn btn-sm" onClick={() => dispatch(fetchAssignments())}>Retry</button>
                 </div>
             ) : filteredAssignments.length === 0 ? (
                 <div className="alert">

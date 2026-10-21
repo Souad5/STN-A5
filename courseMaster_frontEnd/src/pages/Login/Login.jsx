@@ -25,13 +25,13 @@ export default function Login() {
             setLoading(true);
             setError(null);
 
-            const res = await loginUser(form);
+            const res = await loginUser({ email: form.email.trim(), password: form.password });
             saveToken(res.data.token);
 
             navigate("/");
             window.location.reload();
         } catch (err) {
-            setError(err.response?.data?.message || "Login failed. Please check your credentials.");
+            setError(err.response?.data?.message || (err.request ? "Cannot reach the server. Please try again." : "Login failed. Please check your credentials."));
         } finally {
             setLoading(false);
         }

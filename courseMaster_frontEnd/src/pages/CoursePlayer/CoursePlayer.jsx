@@ -51,6 +51,8 @@ export default function CoursePlayer() {
     const [selectedModule, setSelectedModule] = useState(0);
     const [selectedLesson, setSelectedLesson] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [completing, setCompleting] = useState(false);
+    const [completeError, setCompleteError] = useState(null);
 
     const { currentCourse } = useSelector((state) => state.courses);
 
@@ -76,6 +78,8 @@ export default function CoursePlayer() {
             currentCourse?.syllabus[selectedModule]?.lessons[selectedLesson];
         if (!currentLesson) return;
 
+        setCompleting(true);
+        setCompleteError(null);
         try {
             const result = await dispatch(
                 completeLessonAsync({
@@ -96,6 +100,9 @@ export default function CoursePlayer() {
             dispatch(fetchMyEnrollments());
         } catch (err) {
             console.error("Failed to mark lesson complete:", err);
+            setCompleteError(typeof err === "string" ? err : "Could not mark the lesson as complete. Please try again.");
+        } finally {
+            setCompleting(false);
         }
     };
 
@@ -155,11 +162,21 @@ export default function CoursePlayer() {
 
                                 <button
                                     onClick={handleMarkComplete}
-                                    disabled={lessonCompleted}
+                                    disabled={lessonCompleted || completing}
                                     className={`btn btn-sm sm:btn-md ${lessonCompleted ? "btn-disabled" : "btn-success"} mt-3 sm:mt-4 w-full sm:w-auto`}
                                 >
-                                    {lessonCompleted ? "Completed ✓" : "✓ Mark as Complete"}
+                                    {completing ? (
+                                        <>
+                                            <span className="loading loading-spinner loading-xs"></span>
+                                            Saving...
+                                        </>
+                                    ) : lessonCompleted ? "Completed ✓" : "✓ Mark as Complete"}
                                 </button>
+                                {completeError && (
+                                    <div className="alert alert-error mt-3">
+                                        <span>{completeError}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}

@@ -140,11 +140,12 @@ For complete API documentation with request/response formats, see [courseMaster_
 
 ## Bug fixes in this fork
 
-This fork fixes 15 frontend bugs found during QA (IDs FE-01 to FE-15 in the bug report):
+This fork fixes 16 frontend bugs found during QA (IDs FE-01 to FE-16 in the bug report):
 
 - **Auth and routing:** the token is saved and read under the same localStorage key, so login persists; the hardcoded-JWT "Dev Bypass" panel, the `dev_bypass` flag and the fail-open route fallback were removed; `ProtectedRoute` validates the session with the API and supports `requireAdmin`; the user profile is loaded after a page reload.
 - **Pages that were broken:** My Courses no longer crashes (the enrollments reducer stored `payload.data`); the course price is no longer multiplied by 100; enrolling with a batch sends the batch `_id`; the course player video is responsive and completed lessons are detected; dashboard progress uses the saved percent instead of NaN%.
 - **Admin:** the overview's Top Courses chart reads the real analytics fields and the fake "+12%" trend is gone; stale success/error banners are cleared when the course forms open; nested `<main>` landmarks fixed.
+- **Validation and error states:** Register checks name, email and password before sending and shows backend field errors inline; Login and Register report an unreachable server; Mark as Complete has a saving state and an error alert; admin Enrollments and Assignments show API errors with a Retry button.
 - **UI polish:** navbar highlights only the current page, the mobile menu is no longer clipped, and the dead Profile and About links were removed; the course search no longer sends a stale-page request; the course card uses valid markup and wraps long titles.
 
 ## Development

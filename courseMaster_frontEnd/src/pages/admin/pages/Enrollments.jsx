@@ -5,7 +5,7 @@ import { fetchCourses } from "../../../store/slices/coursesSlice";
 
 export default function Enrollments() {
     const dispatch = useDispatch();
-    const { enrollments, loading } = useSelector((state) => state.admin);
+    const { enrollments, loading, error } = useSelector((state) => state.admin);
     const { courses } = useSelector((state) => state.courses);
     const [selectedCourse, setSelectedCourse] = useState("");
     const [searchStudent, setSearchStudent] = useState("");
@@ -68,6 +68,11 @@ export default function Enrollments() {
             {loading ? (
                 <div className="flex justify-center">
                     <span className="loading loading-spinner loading-lg"></span>
+                </div>
+            ) : error ? (
+                <div className="alert alert-error">
+                    <span>{error}</span>
+                    <button className="btn btn-sm" onClick={() => dispatch(fetchEnrollments())}>Retry</button>
                 </div>
             ) : filteredEnrollments.length === 0 ? (
                 <div className="alert">
