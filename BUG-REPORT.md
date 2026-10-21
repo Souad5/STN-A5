@@ -1,203 +1,379 @@
 # CourseMaster QA Bug Report
 
-31 bugs found across the backend (`BE-`) and frontend (`FE-`). All are fixed and verified locally.
+33 bugs found in the CourseMaster backend (`BE-`) and frontend (`FE-`); all are fixed and verified locally. Each bug follows the 5-point template: title, location and steps, expected vs actual, severity and evidence, fix and verification status. The version with screenshots is the Google Docs report.
 
-**Method.** The original code (git HEAD of the Pullock4981 repos) was run next to the fixed code against a local MongoDB seeded with `npm run seed`. Backend bugs were reproduced with a 35-check API script (original: 17 failed; fixed: all pass). Frontend bugs were reproduced in Chrome using the original and the fixed frontend against the same backend, so each difference comes from the frontend change alone. Where a bug is latent or only confirmed from the code path, it says so.
+**Method.** The project was set up locally, the original code (git HEAD of the Pullock4981 repos) was run next to the fixed code, and the live site (https://course-master-front-end.vercel.app/) was explored read-only: it is the original build and shows FE-03, FE-04, FE-11 and BE-01. Backend bugs were reproduced with a 35-check API script (original: 17 failed; fixed: all pass); frontend bugs in Chrome against the same backend. Entries marked latent or code path (BE-07, BE-16, FE-08) could not be shown as a direct failure.
 
-**Severity:** Critical = app unusable or security hole; High = major feature broken; Medium = wrong behaviour with a workaround; Low = cosmetic or latent. **Priority:** P0 fix now, P1 this release, P2 next release, P3 backlog.
+**Severity:** Critical = major feature unusable, crash or severe security issue; High = important feature fails or is significantly wrong; Medium = works incorrectly but a workaround exists; Low = minor UI or low-impact inconsistency. **Priority:** P1 fix immediately, P2 as soon as possible, P3 when higher-priority issues are resolved, P4 low urgency.
 
-| ID | Bug | Severity | Priority |
-| --- | --- | --- | --- |
-| BE-01 | Valid password rejected (plaintext compare instead of bcrypt) | Critical | P0 |
-| BE-02 | Invalid or expired JWT lets the request through the auth middleware | Critical | P0 |
-| BE-03 | Banned or deleted users keep access with their old token | High | P1 |
-| BE-04 | Admin registration key never grants the admin role | Medium | P2 |
-| BE-05 | Enrollment check inverted: first enrollment always fails | Critical | P0 |
-| BE-06 | Any user can mark lessons complete on another student's enrollment | High | P1 |
-| BE-07 | Lesson completion saved without await (latent race) | Low | P3 |
-| BE-08 | Quiz percentage multiplied by 10 instead of 100 | High | P1 |
-| BE-09 | Admin assignment list ignores the course filter | Medium | P2 |
-| BE-10 | Course search returns HTTP 400 for regex characters such as "(" | Medium | P2 |
-| BE-11 | Missing server-side validation (price, grade, status, answers) | Medium | P2 |
-| BE-12 | Analytics chart shows zero enrollments (timezone mismatch) | Medium | P2 |
-| BE-13 | Deleting a user or course leaves orphaned records | Medium | P2 |
-| BE-14 | Invalid course id returns a raw Mongoose cast error | Low | P3 |
-| BE-15 | Backend `.env.example` contains the frontend variables | Low | P3 |
-| BE-16 | Misleading CORS Allow-Methods override (latent) | Low | P3 |
-| FE-01 | Login does not persist: token saved and read under different keys | Critical | P0 |
-| FE-02 | My Courses page crashes to a blank screen | Critical | P0 |
-| FE-03 | Dev-bypass backdoor and hardcoded admin JWT in the login page | Critical | P0 |
-| FE-04 | Course price shown 100 times too high | High | P1 |
-| FE-05 | Enrolling with a batch selected fails | High | P1 |
-| FE-06 | Course player video is 300 x 700 px | Medium | P2 |
-| FE-07 | Completed lessons are never detected in the player | Medium | P2 |
-| FE-08 | Dashboard progress shows NaN% before details are opened | Medium | P2 |
-| FE-09 | Admin overview: Top Courses chart never renders, fake +12% trend | Medium | P2 |
-| FE-10 | Admin user profile not loaded after a page reload | Low | P3 |
-| FE-11 | Navbar: every link looks active, mobile menu clipped, dead Profile link | Medium | P3 |
-| FE-12 | Searching from page 2 sends a stale-page request | Low | P3 |
-| FE-13 | Course card: invalid HTML nesting and unwrapped titles | Low | P3 |
-| FE-14 | Footer links to a non-existent About page | Low | P3 |
-| FE-15 | Nested main landmarks in the admin layout | Low | P3 |
+## Summary
 
-## Backend
+| ID | Bug | Severity | Priority | Status |
+| --- | --- | --- | --- | --- |
+| BE-01 | Valid password rejected on login | Critical | P1 | Fixed & Verified |
+| BE-02 | Invalid or expired JWT lets the request through | Critical | P1 | Fixed & Verified |
+| BE-03 | Banned or deleted users keep access with their old token | High | P2 | Fixed & Verified |
+| BE-04 | Admin registration key never grants the admin role | Medium | P3 | Fixed & Verified |
+| BE-05 | First enrollment always fails with "Already enrolled" | Critical | P1 | Fixed & Verified |
+| BE-06 | Lessons can be completed on another student's enrollment | High | P2 | Fixed & Verified |
+| BE-07 | Lesson completion saved without await (latent) | Low | P4 | Fixed & Verified |
+| BE-08 | Quiz percentage multiplied by 10 instead of 100 | High | P2 | Fixed & Verified |
+| BE-09 | Admin assignment list ignores the course filter | Medium | P3 | Fixed & Verified |
+| BE-10 | Course search returns HTTP 400 for regex characters | Medium | P3 | Fixed & Verified |
+| BE-11 | Missing server-side validation for course price | Medium | P3 | Fixed & Verified |
+| BE-12 | Analytics chart shows zero enrollments (timezone mismatch) | Medium | P3 | Fixed & Verified |
+| BE-13 | Deleting a user or course leaves orphaned records | Medium | P3 | Fixed & Verified |
+| BE-14 | Invalid course id returns a raw Mongoose error | Low | P4 | Fixed & Verified |
+| BE-15 | Backend .env.example contains the frontend variables | Low | P4 | Fixed & Verified |
+| BE-16 | Misleading CORS Allow-Methods override (latent) | Low | P4 | Fixed & Verified |
+| BE-17 | Validation errors return no detail | Medium | P3 | Fixed & Verified |
+| FE-01 | Login does not persist (token key mismatch) | Critical | P1 | Fixed & Verified |
+| FE-02 | My Courses page crashes to a blank screen | Critical | P1 | Fixed & Verified |
+| FE-03 | Dev-bypass backdoor and hardcoded admin JWT | Critical | P1 | Fixed & Verified |
+| FE-04 | Course price shown 100 times too high | High | P2 | Fixed & Verified |
+| FE-05 | Enrolling with a batch selected fails | High | P2 | Fixed & Verified |
+| FE-06 | Course player video is 300 x 700 px | Medium | P3 | Fixed & Verified |
+| FE-07 | Completed lessons not detected in the player | Medium | P3 | Fixed & Verified |
+| FE-08 | Dashboard progress shows NaN% (code path) | Medium | P3 | Fixed & Verified |
+| FE-09 | Admin overview: Top Courses chart missing, fake trend | Medium | P3 | Fixed & Verified |
+| FE-10 | Admin profile not loaded after a page reload | Low | P4 | Fixed & Verified |
+| FE-11 | Navbar: every link active, mobile menu clipped, dead link | Medium | P4 | Fixed & Verified |
+| FE-12 | Searching from page 2 sends a stale-page request | Low | P4 | Fixed & Verified |
+| FE-13 | Course card: invalid HTML and unwrapped titles | Low | P4 | Fixed & Verified |
+| FE-14 | Footer links to a non-existent About page | Low | P4 | Fixed & Verified |
+| FE-15 | Nested main landmarks in the admin layout | Low | P4 | Fixed & Verified |
+| FE-16 | Register and Login give no validation feedback; failures are silent | Medium | P3 | Fixed & Verified |
 
-### BE-01 Valid password rejected (Critical, P0)
-- **Steps:** `POST /api/auth/login` with `admin@coursemaster.com` / `admin123`.
-- **Expected:** 200 and a JWT. **Actual:** 400 "Invalid email or password"; the code compared the typed password with the stored bcrypt hash using `===`, so nobody could log in.
-- **Fix:** `bcrypt.compare`, normalised email, banned users rejected. **Verified:** right password gives 200, wrong password 400.
+## Backend bug reports
 
-### BE-02 Invalid JWT passes the auth middleware (Critical, P0)
-- **Steps:** `GET /api/auth/me` with `Authorization: Bearer garbage`.
-- **Expected:** 401. **Actual:** the `catch` called `next()`, the request continued with no user, and returned 404 `Cannot read properties of undefined (reading 'id')`.
-- **Fix:** return 401 "Invalid or expired token". **Verified:** 401 on `/auth/me` and `/users`.
+### BE-01: Valid password rejected on login
 
-### BE-03 Banned or deleted users keep access (High, P1)
-- **Steps:** log in as a student and keep the token; as admin, ban or delete that user; call `/api/auth/me` with the old token.
-- **Expected:** 403 (banned) or 401 (deleted). **Actual:** 200 for the banned user and a 404 error for the deleted one. Banned users could also log in.
-- **Fix:** the middleware reloads the user on every request, rejects missing or banned accounts and takes the role from the DB; login refuses banned users. **Verified:** banned login blocked, old tokens rejected.
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-01: Valid password rejected on login |
+| Location & Steps to Reproduce | Backend, `POST /api/auth/login`. Send admin@coursemaster.com / admin123 (the documented admin account). |
+| Expected vs. Actual Result | Expected: 200 and a JWT. Actual: 400 "Invalid email or password" for every user, because the password was compared with the stored bcrypt hash using `===`. The live site shows the same error for the demo admin. |
+| Severity & Evidence | Critical (P1). API check T01: status 400 on the original, 200 on the fixed code. Live site: login returns 400. |
+| Fix & Verification Status | Used `bcrypt.compare`, normalised the email, rejected banned users. Verified: right password 200, wrong password 400. Status: Fixed & Verified. |
 
-### BE-04 Admin registration key never grants admin (Medium, P2)
-- **Steps:** `POST /api/auth/register` with `adminKey` equal to `ADMIN_REGISTRATION_KEY`.
-- **Expected:** role admin; a wrong key is rejected. **Actual:** role always student; a wrong key was accepted silently. The service also read a `role` field from the payload without checking the key.
-- **Fix:** admin only when the key matches; wrong key returns 400; `role` payload no longer read. **Verified:** correct key gives admin, wrong key 400.
+### BE-02: Invalid or expired JWT lets the request through
 
-### BE-05 Enrollment check inverted (Critical, P0)
-- **Steps:** as a student who is not enrolled, `POST /api/enrollments/:courseId`.
-- **Expected:** 201; a second attempt returns "Already enrolled". **Actual:** the first attempt returned 400 "Already enrolled in this course" (the condition was `!enrollment`).
-- **Fix:** throw only when an enrollment exists. **Verified:** 201, then 400 on the duplicate.
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-02: Invalid or expired JWT lets the request through |
+| Location & Steps to Reproduce | Backend, auth middleware. `GET /api/auth/me` with header `Authorization: Bearer garbage`. |
+| Expected vs. Actual Result | Expected: 401. Actual: the middleware called `next()` after a failed verification, so the request ran with no user and returned 404 `Cannot read properties of undefined (reading 'id')`. |
+| Severity & Evidence | Critical (P1). T03: 404 with that message on the original, 401 on the fixed code. |
+| Fix & Verification Status | Return 401 "Invalid or expired token". Verified on `/auth/me` and `/users`. Status: Fixed & Verified. |
 
-### BE-06 Lessons can be completed on another student's enrollment (High, P1)
-- **Steps:** student B calls `PATCH /api/enrollments/<student A's enrollment id>/complete-lesson`.
-- **Expected:** rejected. **Actual:** 200 and A's progress changed; any ObjectId was accepted as a lesson.
-- **Fix:** look the enrollment up by id and caller, and require the lesson to belong to the course. **Verified:** both cases return 400.
+### BE-03: Banned or deleted users keep access with their old token
 
-### BE-07 Lesson completion saved without await (Low, P3, latent)
-- **Steps:** code path: `enrollment.save()` was not awaited in `completeLesson`.
-- **Expected:** respond after a successful save. **Actual:** data was still written in testing, but the response did not wait and a failed save would be an unhandled rejection.
-- **Fix:** `await enrollment.save()`. **Verified:** progress persists after the call.
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-03: Banned or deleted users keep access with their old token |
+| Location & Steps to Reproduce | Backend, auth middleware. Log in as a student and keep the token; as admin ban (or delete) that user; call `GET /api/auth/me` with the old token. |
+| Expected vs. Actual Result | Expected: 403 (banned) or 401 (deleted). Actual: 200 for the banned user and a 404 error for the deleted one; the 30-day token stayed valid and banned users could log in. |
+| Severity & Evidence | High (P2). T22 / T22b / T23 failed on the original (status 200 for the banned user's token). |
+| Fix & Verification Status | The middleware reloads the user on each request, rejects missing or banned accounts and takes the role from the DB; login refuses banned users. Verified. Status: Fixed & Verified. |
 
-### BE-08 Quiz percentage wrong (High, P1)
-- **Steps:** submit a quiz with every answer correct.
-- **Expected:** `percent` 100. **Actual:** `{"total":2,"score":2,"percent":10}`.
-- **Fix:** multiply by 100; validate the payload. **Verified:** 100; a bad payload returns 400.
+### BE-04: Admin registration key never grants the admin role
 
-### BE-09 Admin assignment filter ignored (Medium, P2)
-- **Steps:** `GET /api/admin/assignments?courseId=<course B>`.
-- **Expected:** only course B. **Actual:** other courses' submissions returned; the query used a field `courseId` the schema does not have, and the controller dropped the query string.
-- **Fix:** filter on `course` and pass `req.query`. **Verified:** only matching submissions.
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-04: Admin registration key never grants the admin role |
+| Location & Steps to Reproduce | Backend, `POST /api/auth/register` with `adminKey` equal to ADMIN_REGISTRATION_KEY (documented in the README). |
+| Expected vs. Actual Result | Expected: role admin; a wrong key is rejected. Actual: role always student, a wrong key was silently accepted, and the service read a `role` field from the payload without checking the key. |
+| Severity & Evidence | Medium (P3). Original: correct key returned role `student`; fixed code returns `admin`, wrong key returns 400 (T04). |
+| Fix & Verification Status | Admin only when the key matches the environment value; wrong key returns 400; the `role` payload field is ignored. Verified. Status: Fixed & Verified. |
 
-### BE-10 Course search fails on regex characters (Medium, P2)
-- **Steps:** `GET /api/courses?search=(`.
-- **Expected:** 200 with an empty list. **Actual:** 400 "Regular expression is invalid: missing closing parenthesis".
-- **Fix:** escape metacharacters before building the regex. **Verified:** 200.
+### BE-05: First enrollment always fails with "Already enrolled"
 
-### BE-11 Missing server-side validation (Medium, P2)
-- **Steps:** create or update a course with price -5.
-- **Expected:** 400. **Actual:** 201 on create and 200 on update. Other inputs (review status and grade, quiz and assignment payloads) already failed with generic errors.
-- **Fix:** `min: 0` on price, `runValidators` on updates, explicit status, grade and payload checks. **Verified:** negative price returns 400; the other checks return explicit messages.
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-05: First enrollment always fails with "Already enrolled" |
+| Location & Steps to Reproduce | Backend, `POST /api/enrollments/:courseId` as a student who is not enrolled. |
+| Expected vs. Actual Result | Expected: 201 and an enrollment; a second attempt returns "Already enrolled". Actual: the first attempt returned 400 "Already enrolled in this course" (the check was `!enrollment`), so nobody could enrol. |
+| Severity & Evidence | Critical (P1). T09 failed on the original with that message; passes on the fixed code. |
+| Fix & Verification Status | Throw only when an enrollment already exists. Verified: 201, then 400 on a duplicate (T09, T10). Status: Fixed & Verified. |
 
-### BE-12 Analytics chart shows zero enrollments (Medium, P2)
-- **Steps:** with enrollments created today, open Admin > Analytics (server timezone UTC+6).
-- **Expected:** today's point shows them. **Actual:** the line was flat at 0 while the card said 4. Chart days came from local midnight and enrollment days from UTC, so they never matched.
-- **Fix:** UTC day buckets for both. **Verified:** 3 enrollments on 2026-10-20, chart shows them.
+### BE-06: Lessons can be completed on another student's enrollment
 
-### BE-13 Orphaned records after deleting a user or course (Medium, P2)
-- **Steps:** delete a student who has enrollments; open Admin > Enrollments.
-- **Expected:** no row for that student. **Actual:** a row with a blank name and email stayed; the same for submissions and for a deleted course.
-- **Fix:** deleting a user or course also deletes their enrollments and submissions. **Verified:** no rows with a missing student or course.
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-06: Lessons can be completed on another student's enrollment |
+| Location & Steps to Reproduce | Backend, `PATCH /api/enrollments/:enrollId/complete-lesson`. Student B sends student A's enrollment id with any lessonId. |
+| Expected vs. Actual Result | Expected: rejected. Actual: 200 and A's progress changed; any ObjectId was also accepted as a lesson. |
+| Severity & Evidence | High (P2). T13: status 200 on the original, 400 on the fixed code. |
+| Fix & Verification Status | The enrollment is looked up by id and the caller, and the lesson must belong to the course. Verified (T12c, T13). Status: Fixed & Verified. |
 
-### BE-14 Invalid course id leaks a Mongoose error (Low, P3)
-- **Steps:** `GET /api/courses/not-an-id`.
-- **Expected:** 404 "Course not found". **Actual:** 404 with the Mongoose `Cast to ObjectId failed...` text.
-- **Fix:** validate the id first. **Verified:** clean message.
+### BE-07: Lesson completion saved without await (latent)
 
-### BE-15 Backend `.env.example` holds the frontend variables (Low, P3)
-- **Expected:** PORT, MONGODB_URI, JWT_SECRET and the rest. **Actual:** the file contained `VITE_API_BASE_URL`.
-- **Fix:** replaced with the backend variables. **Verified:** the server starts with a `.env` copied from it.
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-07: Lesson completion saved without await (latent) |
+| Location & Steps to Reproduce | Backend, `completeLesson` in `enrollment.service.js` (code path). |
+| Expected vs. Actual Result | Expected: respond after a successful save and report save errors. Actual: `enrollment.save()` was not awaited; data was still written in testing, but the response did not wait and a failed save would be an unhandled rejection. |
+| Severity & Evidence | Low (P4). Code inspection; no data loss observed (substantiated, not a visible failure). |
+| Fix & Verification Status | `await enrollment.save()`. Verified: progress persists (T12b). Status: Fixed & Verified. |
 
-### BE-16 Misleading CORS Allow-Methods override (Low, P3, latent)
-- **Steps:** code path: a middleware set `Access-Control-Allow-Methods: GET, POST` after `cors()`.
-- **Actual:** no failure observed, because `cors()` answers preflights first. It would break handling if the order changed.
-- **Fix:** removed. **Verified:** preflight still lists GET, HEAD, PUT, PATCH, POST, DELETE.
+### BE-08: Quiz percentage multiplied by 10 instead of 100
 
-## Frontend
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-08: Quiz percentage multiplied by 10 instead of 100 |
+| Location & Steps to Reproduce | Backend, `POST /api/quizzes/submit` with every answer correct. |
+| Expected vs. Actual Result | Expected: `percent` 100. Actual: `{"total":2,"score":2,"percent":10}`, so averages and grade colours were wrong. |
+| Severity & Evidence | High (P2). Response above, from the original code. |
+| Fix & Verification Status | Multiply by 100 and validate the payload. Verified: 100, and a bad payload returns 400 (T14, T14b). Status: Fixed & Verified. |
 
-### FE-01 Login does not persist (Critical, P0)
-- **Steps:** sign in at `/login`, then open `/student`.
-- **Expected:** stay signed in. **Actual:** returned to `/login`; `saveToken` wrote `user_token` and `getToken` read `token`.
-- **Fix:** both use `token`. **Verified:** `token` is stored and `/student` stays open.
+### BE-09: Admin assignment list ignores the course filter
 
-### FE-02 My Courses crashes to a blank screen (Critical, P0)
-- **Steps:** sign in with a valid token and open `/student`.
-- **Expected:** enrolled courses. **Actual:** blank page, console error `Cannot read properties of undefined (reading 'length')`; the reducer stored `action.payload.data`, which is undefined.
-- **Fix:** store `action.payload`. **Verified:** courses and progress render with no console errors.
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-09: Admin assignment list ignores the course filter |
+| Location & Steps to Reproduce | Backend, `GET /api/admin/assignments?courseId=<id>`. |
+| Expected vs. Actual Result | Expected: only that course's submissions. Actual: other courses' submissions were returned; the query used a field `courseId` that the schema does not have, and the controller dropped the query string. |
+| Severity & Evidence | Medium (P3). T16b: 1 item from another course on the original, 0 on the fixed code. |
+| Fix & Verification Status | Filter on `course` and pass `req.query`. Verified (T16, T16b). Status: Fixed & Verified. |
 
-### FE-03 Dev-bypass backdoor and hardcoded JWT (Critical, P0)
-- **Steps:** open `/login` (a "Dev Bypass" panel is shown); or run `localStorage.setItem('dev_bypass','true')` or add `?bypass=true`.
-- **Expected:** no bypass in a shipped app. **Actual:** two signed JWTs (one admin) were in the source; the flag skipped the token check; the navbar showed portal links to anonymous visitors; a failed profile request still opened the route if any token existed.
-- **Fix:** removed the panel, tokens, flag and fail-open fallback; `ProtectedRoute` validates the session with the API and redirects to `/login`. Treat the embedded tokens as exposed and rotate the signing secret if it was used outside local testing.
-- **Verified:** panel gone; an anonymous visitor with the flag set lands on `/login`.
+### BE-10: Course search returns HTTP 400 for regex characters
 
-### FE-04 Course price 100 times too high (High, P1)
-- **Steps:** open a course details page and compare with the card.
-- **Expected:** 5,000. **Actual:** 500000 (`course.price * 100`). **Fix:** show `course.price`. **Verified:** 5,000.
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-10: Course search returns HTTP 400 for regex characters |
+| Location & Steps to Reproduce | Backend, `GET /api/courses?search=(`. |
+| Expected vs. Actual Result | Expected: 200 with an empty list. Actual: 400 "Regular expression is invalid: missing closing parenthesis"; user input was used as a raw regex. |
+| Severity & Evidence | Medium (P3). T08 error text above. |
+| Fix & Verification Status | Escape regex metacharacters. Verified: 200. Status: Fixed & Verified. |
 
-### FE-05 Enrolling with a batch selected fails (High, P1)
-- **Steps:** open a course with batches, select Batch 1, click Enroll Now.
-- **Expected:** enrolled. **Actual:** `Enrollment validation failed: batchId: Cast to ObjectId failed for value "0"`; the page sent the array index as the batch id, and index 0 also counted as "nothing selected".
-- **Fix:** select by `batch._id` and test against `null`. **Verified:** "Successfully enrolled!".
+### BE-11: Missing server-side validation for course price
 
-### FE-06 Player video is 300 x 700 px (Medium, P2)
-- **Steps:** open `/courses/:id/player`.
-- **Expected:** a 16:9 player. **Actual:** a narrow, tall iframe on every screen size.
-- **Fix:** `w-full aspect-video`. **Verified:** 667 x 375 at 1280 px.
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-11: Missing server-side validation for course price |
+| Location & Steps to Reproduce | Backend, `POST` or `PATCH /api/admin/courses` with `price: -5`. |
+| Expected vs. Actual Result | Expected: 400. Actual: 201 on create and 200 on update; a negative price was stored. |
+| Severity & Evidence | Medium (P3). T19 / T19b: statuses 201 and 200 on the original. |
+| Fix & Verification Status | `min: 0` on price and `runValidators` on updates; review status and grade (0-100) and assignment/quiz payloads now get explicit checks. Verified (T14b, T15, T17, T17b, T19). Status: Fixed & Verified. |
 
-### FE-07 Completed lessons not detected (Medium, P2)
-- **Steps:** open a lesson the student already completed.
-- **Expected:** "Completed" and disabled. **Actual:** "Mark as Complete" stayed active; the code looked for the whole lesson object in the list of completed ids.
-- **Fix:** compare string ids. **Verified:** shows "Completed".
+### BE-12: Analytics chart shows zero enrollments (timezone mismatch)
 
-### FE-08 Dashboard progress shows NaN% (Medium, P2)
-- **Steps:** code path: percent was `completed / totalLessons`, where `totalLessons` comes from data loaded only when Details is opened.
-- **Expected:** the saved percent. **Actual:** division by `undefined` gives NaN%. Confirmed from the expression, because the page could not render before FE-02 was fixed.
-- **Fix:** show `enrollment.progress.percent`. **Verified:** cards show 0% and 25%.
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-12: Analytics chart shows zero enrollments (timezone mismatch) |
+| Location & Steps to Reproduce | Admin > Analytics with enrollments created today (server timezone UTC+6). |
+| Expected vs. Actual Result | Expected: today's point shows the enrollments. Actual: the line is flat at 0 while the card says 4, because chart days used local midnight and enrollment days used UTC; the last label was also a day off. |
+| Severity & Evidence | Medium (P3). Screenshot below; the API returned `enrollments: 0` for every day. |
+| Fix & Verification Status | UTC day buckets for both. Verified: 3 enrollments on 2026-10-20 and the chart shows them. Status: Fixed & Verified. |
 
-### FE-09 Admin overview: Top Courses chart missing, fake trend (Medium, P2)
-- **Steps:** sign in as admin and open `/admin`.
-- **Expected:** a Top Courses chart and real numbers only. **Actual:** no chart (the page read `topCourses`/`courseTitle`/`count`, the API returns `enrollmentsByCourse`/`courseName`/`enrollments`) and a hardcoded "+12%".
-- **Fix:** read the real fields, remove the fake trend. **Verified:** chart present, "+12%" gone.
+### BE-13: Deleting a user or course leaves orphaned records
 
-### FE-10 Admin profile not loaded after reload (Low, P3)
-- **Steps:** sign in as admin, reload, open `/courses`.
-- **Expected:** the "Manage Courses" button. **Actual:** missing; the profile was requested only when not "authenticated", but that flag starts true when a token exists.
-- **Fix:** request the profile whenever there is a token and no user. **Verified:** button appears.
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-13: Deleting a user or course leaves orphaned records |
+| Location & Steps to Reproduce | Delete a student who has enrollments, then open Admin > Enrollments. |
+| Expected vs. Actual Result | Expected: no row for that student. Actual: a row with a blank name and email remains, and totals still count it; the same happens for submissions and for a deleted course. |
+| Severity & Evidence | Medium (P3). Screenshot below (blank first row). |
+| Fix & Verification Status | Deleting a user or course also deletes their enrollments and submissions. Verified: no rows with a missing student or course. Status: Fixed & Verified. |
 
-### FE-11 Navbar problems (Medium, P3)
-- **Steps:** open the home page; then open the mobile menu at 390 px while signed in.
-- **Expected:** only the current page highlighted, full menu, working links. **Actual:** Home and Courses always highlighted (`pathname.startsWith('/')` is always true); the menu was cut off at 128 px; the Profile link led to a 404.
-- **Fix:** use `isActive` (with `end` for Home), let the menu scroll to 80% of the screen, remove the dead link. **Verified:** one active link; the mobile menu is 313 px tall.
+### BE-14: Invalid course id returns a raw Mongoose error
 
-### FE-12 Search from page 2 sends a stale request (Low, P3)
-- **Steps:** with more than 8 courses, go to page 2, search, click Search.
-- **Expected:** one request for page 1. **Actual:** two requests, `page=2&search=...` then `page=1&search=...`.
-- **Fix:** fetch with an explicit page. **Verified:** one request.
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-14: Invalid course id returns a raw Mongoose error |
+| Location & Steps to Reproduce | Backend, `GET /api/courses/not-an-id`. |
+| Expected vs. Actual Result | Expected: 404 "Course not found". Actual: 404 with `Cast to ObjectId failed for value "not-an-id" (type string) at path "_id" for model "Course"`. |
+| Severity & Evidence | Low (P4). T08b message above. |
+| Fix & Verification Status | Validate the id first. Verified: "Course not found". Status: Fixed & Verified. |
 
-### FE-13 Course card markup (Low, P3)
-- **Steps:** open `/courses` and watch the console.
-- **Expected:** valid HTML and wrapped titles. **Actual:** React warning "`<div>` cannot be a descendant of `<p>`"; titles forced onto one line.
-- **Fix:** `div` wrapper and a two-line title clamp. **Verified:** no warning.
+### BE-15: Backend .env.example contains the frontend variables
 
-### FE-14 Dead About link (Low, P3)
-- **Steps:** click "About Us" in the footer.
-- **Expected:** an About page. **Actual:** `/about` is not a route, so the 404 page shows.
-- **Fix:** link removed. **Verified:** footer shows Home and Courses only.
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-15: Backend .env.example contains the frontend variables |
+| Location & Steps to Reproduce | Open `courseMaster_Backend/.env.example` and follow the README setup. |
+| Expected vs. Actual Result | Expected: PORT, MONGODB_URI, JWT_SECRET and the other backend variables. Actual: the file held `VITE_API_BASE_URL`, so a new developer had no template. |
+| Severity & Evidence | Low (P4). File contents on the original. |
+| Fix & Verification Status | Replaced with the backend variables. Verified: the server starts with a `.env` copied from it. Status: Fixed & Verified. |
 
-### FE-15 Nested main landmarks (Low, P3)
-- **Steps:** open an `/admin` page and count `<main>` elements.
-- **Expected:** one. **Actual:** two, nested.
-- **Fix:** the inner element is a `div`. **Verified:** one.
+### BE-16: Misleading CORS Allow-Methods override (latent)
 
-## Regression checks
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-16: Misleading CORS Allow-Methods override (latent) |
+| Location & Steps to Reproduce | Backend, `app.js` (code path): a middleware set `Access-Control-Allow-Methods: GET, POST` after `cors()`. |
+| Expected vs. Actual Result | Expected: PUT, PATCH and DELETE work from the browser. Actual: no failure observed, because `cors()` answers preflights first; the override would break handling if the order changed. |
+| Severity & Evidence | Low (P4). T20 passed on the original, so this is substantiated by code only. |
+| Fix & Verification Status | Removed. Verified: preflight still lists GET, HEAD, PUT, PATCH, POST, DELETE (T20). Status: Fixed & Verified. |
 
-API suite: 35 of 35 pass. Frontend builds with `vite build`. Chrome runs passed for: register, sign in and wrong password; search, details, enrol with a batch; player, quiz and 100% progress; student blocked from `/admin`; admin create, edit and delete a course; all admin pages load. `npm run lint` went from 18 to 13 errors; the rest are existing warnings in untouched code.
+### BE-17: Validation errors return no detail
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | BE-17: Validation errors return no detail |
+| Location & Steps to Reproduce | Backend, `POST /api/auth/register` with `{"name":"A","email":"bad","password":"1"}`. |
+| Expected vs. Actual Result | Expected: a 400 that says which fields are wrong. Actual: `{"message":"Validation error"}` only; the middleware read `err.errors`, which does not exist in Zod 4 (`issues`), so `errors` was undefined and the app could only show "Validation error". |
+| Severity & Evidence | Medium (P3). Zod 4.1.13: `err.errors` is `undefined`, `err.issues` has 3 entries. |
+| Fix & Verification Status | Use `err.issues`, return `{ message: "Validation error: name: ...; email: ...", errors: [{field, message}] }`, and add clear schema messages. Verified: the middleware returns all three field errors; valid input passes. Status: Fixed & Verified. |
+
+## Frontend bug reports
+
+### FE-01: Login does not persist (token key mismatch)
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | FE-01: Login does not persist (token key mismatch) |
+| Location & Steps to Reproduce | Login page, sign in as student@coursemaster.com / student123, then open /student. |
+| Expected vs. Actual Result | Expected: stay signed in. Actual: sent back to /login; the token was saved as `user_token` but read as `token`, so localStorage held `["user_token","theme"]`. |
+| Severity & Evidence | Critical (P1). localStorage keys after login on the original: `user_token`, `theme`. |
+| Fix & Verification Status | Both functions use the key `token`. Verified: `token` is stored and /student stays open. Status: Fixed & Verified. |
+
+### FE-02: My Courses page crashes to a blank screen
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | FE-02: My Courses page crashes to a blank screen |
+| Location & Steps to Reproduce | Sign in with a valid token and open /student. |
+| Expected vs. Actual Result | Expected: the list of enrolled courses. Actual: blank page; console error `Cannot read properties of undefined (reading 'length')` because the reducer stored `action.payload.data`, which is undefined. |
+| Severity & Evidence | Critical (P1). Screenshots below. |
+| Fix & Verification Status | Store `action.payload`. Verified: courses and progress render with no console errors. Status: Fixed & Verified. |
+
+### FE-03: Dev-bypass backdoor and hardcoded admin JWT
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | FE-03: Dev-bypass backdoor and hardcoded admin JWT |
+| Location & Steps to Reproduce | Open /login (a "Dev Bypass" panel offers Student and Admin Portal buttons), or run `localStorage.setItem('dev_bypass','true')` or add `?bypass=true`. |
+| Expected vs. Actual Result | Expected: no bypass in a shipped app. Actual: two signed JWTs (one admin) were in the source; the flag skipped the token check; the navbar showed portal links to anonymous visitors; and a failed profile request still opened the route if any token existed. The panel is visible on the live site. |
+| Severity & Evidence | Critical (P1). Screenshot below; the panel is also present on https://course-master-front-end.vercel.app/login. |
+| Fix & Verification Status | Removed the panel, tokens, flag and fail-open fallback; `ProtectedRoute` validates the session with the API and redirects to /login. Treat the embedded tokens as exposed and rotate the signing secret if it was used outside local testing. Verified: an anonymous visitor with the flag set lands on /login. Status: Fixed & Verified. |
+
+### FE-04: Course price shown 100 times too high
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | FE-04: Course price shown 100 times too high |
+| Location & Steps to Reproduce | Open any course details page and compare with the course card. |
+| Expected vs. Actual Result | Expected: ৳ 5,000. Actual: ৳ 500000 (`course.price * 100`). Also visible on the live site. |
+| Severity & Evidence | High (P2). Screenshots below. |
+| Fix & Verification Status | Show `course.price` with thousands separators. Verified: ৳ 5,000. Status: Fixed & Verified. |
+
+### FE-05: Enrolling with a batch selected fails
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | FE-05: Enrolling with a batch selected fails |
+| Location & Steps to Reproduce | Course details of a course with batches, select "Batch 1", click Enroll Now. |
+| Expected vs. Actual Result | Expected: enrolled. Actual: error `Enrollment validation failed: batchId: Cast to ObjectId failed for value "0"`; the page sent the array index as the batch id, and index 0 also counted as "nothing selected". |
+| Severity & Evidence | High (P2). Screenshots below. |
+| Fix & Verification Status | Select by `batch._id` and test against `null`. Verified: "Successfully enrolled!". Status: Fixed & Verified. |
+
+### FE-06: Course player video is 300 x 700 px
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | FE-06: Course player video is 300 x 700 px |
+| Location & Steps to Reproduce | Open /courses/:id/player for an enrolled course. |
+| Expected vs. Actual Result | Expected: a 16:9 player that fills the card. Actual: a narrow, tall strip on every screen size. |
+| Severity & Evidence | Medium (P3). Screenshots below; measured 300 x 700. |
+| Fix & Verification Status | `w-full aspect-video`. Verified: 667 x 375 at 1280 px. Status: Fixed & Verified. |
+
+### FE-07: Completed lessons not detected in the player
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | FE-07: Completed lessons not detected in the player |
+| Location & Steps to Reproduce | Open the player on a lesson the student already completed. |
+| Expected vs. Actual Result | Expected: the button reads "Completed" and is disabled. Actual: "Mark as Complete" stayed active; the code looked for the whole lesson object in the list of completed ids. |
+| Severity & Evidence | Medium (P3). Button text on the original: "Mark as Complete". |
+| Fix & Verification Status | Compare string ids. Verified: "Completed". Status: Fixed & Verified. |
+
+### FE-08: Dashboard progress shows NaN% (code path)
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | FE-08: Dashboard progress shows NaN% (code path) |
+| Location & Steps to Reproduce | Student dashboard, first view of My Courses (code path). |
+| Expected vs. Actual Result | Expected: the saved progress percent. Actual: `completed / totalLessons` with `totalLessons` undefined until Details is opened gives NaN%. Confirmed from the expression, because the page could not render before FE-02 was fixed. |
+| Severity & Evidence | Medium (P3). Code inspection. |
+| Fix & Verification Status | Show `enrollment.progress.percent`. Verified: cards show 0% and 25%. Status: Fixed & Verified. |
+
+### FE-09: Admin overview: Top Courses chart missing, fake trend
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | FE-09: Admin overview: Top Courses chart missing, fake trend |
+| Location & Steps to Reproduce | Sign in as admin and open /admin. |
+| Expected vs. Actual Result | Expected: a Top Courses chart and real numbers. Actual: no chart (the page read `topCourses` / `courseTitle` / `count`; the API returns `enrollmentsByCourse` / `courseName` / `enrollments`) and a hardcoded "+12%". |
+| Severity & Evidence | Medium (P3). Screenshots below. |
+| Fix & Verification Status | Read the real fields and removed the fake trend. Verified: chart present, "+12%" gone. Status: Fixed & Verified. |
+
+### FE-10: Admin profile not loaded after a page reload
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | FE-10: Admin profile not loaded after a page reload |
+| Location & Steps to Reproduce | Sign in as admin, reload, open /courses. |
+| Expected vs. Actual Result | Expected: the "Manage Courses" button. Actual: missing; the profile was requested only when not "authenticated", but that flag starts true when a token exists. |
+| Severity & Evidence | Low (P4). Button count 0 on the original. |
+| Fix & Verification Status | Request the profile whenever there is a token and no user. Verified: button count 1. Status: Fixed & Verified. |
+
+### FE-11: Navbar: every link active, mobile menu clipped, dead link
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | FE-11: Navbar: every link active, mobile menu clipped, dead link |
+| Location & Steps to Reproduce | Open the home page; then open the hamburger menu at 390 px width while signed in. |
+| Expected vs. Actual Result | Expected: only the current page highlighted, the whole menu visible, working links. Actual: Home and Courses always highlighted (`pathname.startsWith('/')`), the menu cut off at 128 px so Dashboard and Logout are hidden, and Profile led to a 404. Also seen on the live site (127 px menu). |
+| Severity & Evidence | Medium (P4). Screenshots below. |
+| Fix & Verification Status | Use `isActive` (with `end` for Home), let the menu scroll up to 80% of the screen, remove the dead link. Verified: one active link, menu 313 px tall. Status: Fixed & Verified. |
+
+### FE-12: Searching from page 2 sends a stale-page request
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | FE-12: Searching from page 2 sends a stale-page request |
+| Location & Steps to Reproduce | With more than 8 courses go to page 2, type a search, click Search. |
+| Expected vs. Actual Result | Expected: one request for page 1. Actual: two requests, `page=2&search=...` then `page=1&search=...`. |
+| Severity & Evidence | Low (P4). Network log above. |
+| Fix & Verification Status | Fetch with an explicit page. Verified: one request. Status: Fixed & Verified. |
+
+### FE-13: Course card: invalid HTML and unwrapped titles
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | FE-13: Course card: invalid HTML and unwrapped titles |
+| Location & Steps to Reproduce | Open /courses and watch the console. |
+| Expected vs. Actual Result | Expected: valid HTML, wrapped titles. Actual: React warning "In HTML, <div> cannot be a descendant of <p>"; titles forced onto one line. |
+| Severity & Evidence | Low (P4). Console warning above. |
+| Fix & Verification Status | `div` wrapper and a two-line title clamp. Verified: no warning. Status: Fixed & Verified. |
+
+### FE-14: Footer links to a non-existent About page
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | FE-14: Footer links to a non-existent About page |
+| Location & Steps to Reproduce | Click "About Us" in the footer. |
+| Expected vs. Actual Result | Expected: an About page. Actual: `/about` is not a route, so the 404 page shows. |
+| Severity & Evidence | Low (P4). Route table in `App.jsx`. |
+| Fix & Verification Status | Link removed. Verified: footer shows Home and Courses only. Status: Fixed & Verified. |
+
+### FE-15: Nested main landmarks in the admin layout
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | FE-15: Nested main landmarks in the admin layout |
+| Location & Steps to Reproduce | Open any /admin page and count `<main>` elements. |
+| Expected vs. Actual Result | Expected: one. Actual: two, nested, which confuses screen readers. |
+| Severity & Evidence | Low (P4). Count was 2 in the browser. |
+| Fix & Verification Status | The inner element is a `div`. Verified: one. Status: Fixed & Verified. |
+
+### FE-16: Register and Login give no validation feedback; failures are silent
+
+| Field | Detail |
+| --- | --- |
+| Bug ID & Title | FE-16: Register and Login give no validation feedback; failures are silent |
+| Location & Steps to Reproduce | Register with a 1-character password, or open the player and make a lesson-completion request fail, or open Admin > Enrollments with the API unreachable. |
+| Expected vs. Actual Result | Expected: field-level messages, a loading state and an error message. Actual: no client-side checks (the user only saw "Validation error"), the Mark as Complete button had no loading state and failures were only logged to the console, and the admin Enrollments and Assignments pages showed "No ... found" when the request failed. |
+| Severity & Evidence | Medium (P3). Code inspection plus BE-17. |
+| Fix & Verification Status | Register validates name, email and password and maps backend field errors onto the inputs; Login and Register show a clear message when the server is unreachable; Mark as Complete shows a saving state and an error alert; admin lists show an error with a Retry button. Verified in the browser (see regression section). Status: Fixed & Verified. |
